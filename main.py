@@ -1,53 +1,55 @@
-import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.mixture import GaussianMixture
+from datetime import timedelta
+import numpy as np
 
-def read_data(file_path):
-    """
-    Считывает данные из CSV файла и возвращает DataFrame
-    """
-    df = pd.read_csv(file_path)
-    return df
+# Загрузка данных
+df = pd.read_csv('test_data/test1.csv')
 
-def analyze_data(df):
-    """
-    Анализирует данные и возвращает статистические характеристики
-    """
-    # Вычисляем интервалы между событиями
-    intervals = df['time'].diff().dropna()
-    
-    # Вычисляем среднее время между событиями
-    mean_interval = intervals.mean()
-    
-    # Вычисляем дисперсию времени между событиями 
-    var_interval = intervals.var()
-    
-    return mean_interval, var_interval
+# Преобразование timestamp в pandas datetime
+df['time'] = pd.to_datetime(df['time'])
 
-def generate_data(mean_interval, var_interval, num_events):
-    """
-    Генерирует новые данные на основе статистических характеристик
-    """
-    # Генерируем интервалы между событиями из экспоненциального распределения
-    intervals = np.random.exponential(mean_interval, num_events)
-   
-    # Вычисляем время каждого события
-    times = np.cumsum(intervals)
+# Сортировка по времени (на всякий случай)
+df = df.sort_values('time')
 
-    # Создаем DataFrame с сгенерированными данными
-    df = pd.DataFrame({'time': times, 'event': range(1, num_events+1)})
+# Вычисление интервалов между временными метками
+df['interval'] = df['time'].diff().dt.total_seconds()
+df = df.dropna()  # Удаление первого NaN значения
 
-    return df
+# Визуализация распределения интервалов
+plt.figure(figsize=(10, 6))
+plt.hist(df['interval'], bins=50, density=True, alpha=0.6, color='g')
+plt.title('Distribution of Time Intervals')
+plt.xlabel('Interval (seconds)')
+plt.ylabel('Density')
+plt.show()
 
-# Пример использования
+# Использование GMM для моделирования распределения интервалов
+gmm = GaussianMixture(n_components=3, random_state=0)  # Количество компонентов можно настроить
+gmm.fit(df['interval'].values.reshape(-1, 1))
 
+# Генерация новых интервалов
+n_intervals = 1000  # Количество генерируемых интервалов
+new_intervals = gmm.sample(n_intervals)[0].flatten()
 
-if __name__ == "__main__":
-    file_path = 'test_data/test1.csv'
-    df = read_data(file_path)
+# Преобразование интервалов в временные метки
+start_time = df['time'].iloc[0]  # Начальное время для нового датасета
+new_times = [start_time]
 
-    mean_interval, var_interval = analyze_data(df)
-    print(f"Среднее время между событиями: {mean_interval:.2f}")
-    print(f"Дисперсия времени между событиями: {var_interval:.2f}")
+for interval in new_intervals:
+    new_times.append(new_times[-1] + timedelta(seconds=interval))
 
-    gen_df = generate_data(mean_interval, var_interval, 1000)
-    gen_df.to_csv('gen_data/gen1.csv', index=False)
+# Создание нового DataFrame для сгенерированных данных
+new_df = pd.DataFrame(new_times, columns=['time'])
+
+# Визуализация новых данных
+plt.figure(figsize=(10, 6))
+plt.plot(new_df['time'], np.zeros(len(new_df)), '|')
+plt.title('Generated Time Series Data')
+plt.xlabel('Time')
+plt.ylabel('Events')
+plt.show()
+
+# Сохранение нового датасета
+new_df.to_csv('gen_data/gen1.csv', index=False)
