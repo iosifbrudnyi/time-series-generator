@@ -1,11 +1,19 @@
+import sys
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import ks_2samp
 
+if len(sys.argv) < 3:
+    print("Usage example: python generate.py <original_data_path> <generated_data_path>")
+    sys.exit()
+
+original_data_path = sys.argv[1]
+generated_data_path = sys.argv[2]
+
 # Загрузка данных
-original_df = pd.read_csv('test_data/test1.csv')
-generated_df = pd.read_csv('gen_data/gen1.csv')
+original_df = pd.read_csv(original_data_path)
+generated_df = pd.read_csv(generated_data_path)
 
 # Преобразование timestamp в pandas datetime
 original_df['time'] = pd.to_datetime(original_df['time'])
@@ -23,7 +31,8 @@ plt.title('Histogram of Intervals')
 plt.xlabel('Interval (seconds)')
 plt.ylabel('Density')
 plt.legend()
-plt.show()
+
+# plt.show()
 
 # Ядерные оценки плотности (KDE)
 plt.figure(figsize=(10, 6))
@@ -33,7 +42,7 @@ plt.title('KDE of Intervals')
 plt.xlabel('Interval (seconds)')
 plt.ylabel('Density')
 plt.legend()
-plt.show()
+# plt.show()
 
 # Статистическое сравнение
 ks_stat, ks_p_value = ks_2samp(original_df['interval'], generated_df['interval'])
@@ -59,4 +68,25 @@ plt.title('Autocorrelation')
 plt.xlabel('Lag')
 plt.ylabel('Autocorrelation')
 plt.legend()
+
+# Визуализация оригинальных данных
+plt.figure(figsize=(10, 6))
+plt.hist(original_df['interval'], bins=50, density=True, alpha=0.6, color='g')
+plt.title('Distribution of Time Intervals')
+plt.xlabel('Interval (seconds)')
+plt.ylabel('Density')
+
+# Визуализация временного ряда оригинальных данных
+plt.figure(figsize=(10, 6))
+plt.plot(original_df['time'], np.zeros(len(original_df)), '|')
+plt.title('Time Series Data')
+plt.xlabel('Time')
+plt.ylabel('Events')
+
+# Визуализация временного ряда сгенерированных данных
+plt.figure(figsize=(10, 6))
+plt.plot(generated_df['time'], np.zeros(len(generated_df)), '|')
+plt.title('Generated Time Series Data')
+plt.xlabel('Time')
+plt.ylabel('Events')
 plt.show()

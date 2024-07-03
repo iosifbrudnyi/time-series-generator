@@ -1,12 +1,19 @@
+import sys
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 from sklearn.mixture import GaussianMixture
 from sklearn.model_selection import KFold
 from datetime import timedelta
 
+if len(sys.argv) < 3:
+    print("Usage example: python generate.py <data_path> <n_intervals>")
+    sys.exit()
+
+data_path = sys.argv[1]
+n_intervals = int(sys.argv[2])
+
 # Загрузка данных
-df = pd.read_csv('test_data/test1.csv')
+df = pd.read_csv(data_path)
 
 # Преобразование timestamp в pandas datetime
 df['time'] = pd.to_datetime(df['time'])
@@ -50,7 +57,7 @@ for n_components in n_components_range:
 print(f"Best model parameters: n_components={best_params[0]}, covariance_type={best_params[1]}")
 
 # Генерация новых интервалов
-n_intervals = 500  # Количество генерируемых интервалов
+# n_intervals = 500  # Количество генерируемых интервалов
 new_intervals = best_gmm.sample(n_intervals)[0].flatten()
 
 # Преобразование интервалов в временные метки
@@ -63,27 +70,9 @@ for interval in new_intervals:
 # Создание нового DataFrame для сгенерированных данных
 new_df = pd.DataFrame(new_times, columns=['time'])
 
-# Визуализация оригинальных данных
-plt.figure(figsize=(10, 6))
-plt.hist(df['interval'], bins=50, density=True, alpha=0.6, color='g')
-plt.title('Distribution of Time Intervals')
-plt.xlabel('Interval (seconds)')
-plt.ylabel('Density')
-
-# Визуализация временного ряда оригинальных данных
-plt.figure(figsize=(10, 6))
-plt.plot(df['time'], np.zeros(len(df)), '|')
-plt.title('Time Series Data')
-plt.xlabel('Time')
-plt.ylabel('Events')
-
-# Визуализация временного ряда сгенерированных данных
-plt.figure(figsize=(10, 6))
-plt.plot(new_df['time'], np.zeros(len(new_df)), '|')
-plt.title('Generated Time Series Data')
-plt.xlabel('Time')
-plt.ylabel('Events')
-plt.show()
+out_file_name = sys.argv[1].split("/")[-1]
+out_file_name = out_file_name.split(".")[0]
+out_file_name += "_gen.csv"
 
 # Сохранение нового датасета
-new_df.to_csv('gen_data/gen1.csv', index=False)
+new_df.to_csv("gen_data/" + out_file_name, index=False)
