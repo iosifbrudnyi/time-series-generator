@@ -61,14 +61,6 @@ print(f"Generated Mean: {generated_mean}, Generated Std: {generated_std}")
 original_autocorr = [original_df['interval'].autocorr(lag) for lag in range(1, 11)]
 generated_autocorr = [generated_df['interval'].autocorr(lag) for lag in range(1, 11)]
 
-plt.figure(figsize=(10, 6))
-plt.plot(range(1, 11), original_autocorr, marker='o', label='Original')
-plt.plot(range(1, 11), generated_autocorr, marker='o', label='Generated')
-plt.title('Autocorrelation')
-plt.xlabel('Lag')
-plt.ylabel('Autocorrelation')
-plt.legend()
-
 # Визуализация оригинальных данных
 plt.figure(figsize=(10, 6))
 plt.hist(original_df['interval'], bins=50, density=True, alpha=0.6, color='g')
